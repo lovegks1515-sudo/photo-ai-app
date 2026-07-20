@@ -3,10 +3,8 @@ import google.generativeai as genai
 from PIL import Image
 import io
 
-# 1. 페이지 설정
 st.set_page_config(page_title="📸 사진 분석", layout="centered")
 
-# 2. API 키 확인
 if "API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["API_KEY"])
 else:
@@ -15,16 +13,13 @@ else:
 
 st.title("📸 사진 분석")
 
-# 3. 파일 업로더
 uploaded_file = st.file_uploader("사진을 선택하세요", type=None)
 
 if uploaded_file is not None:
     try:
-        # 4. 파일 스트림 및 이미지 정규화 (업로드 오류 원천 차단)
         file_bytes = uploaded_file.read()
         img = Image.open(io.BytesIO(file_bytes))
         
-        # JPEG 변환을 통한 데이터 단순화
         buffer = io.BytesIO()
         img.convert("RGB").save(buffer, format="JPEG", quality=90)
         buffer.seek(0)
@@ -32,33 +27,36 @@ if uploaded_file is not None:
         
         st.image(final_img, use_column_width=True)
         
-        # 5. 분석 버튼
         if st.button("분석 시작"):
-            with st.spinner("선생님이 사진을 확인 중입니다..."):
+            with st.spinner("분석 중입니다..."):
                 try:
                     model = genai.GenerativeModel(model_name='gemini-3.5-flash')
                     
-                    # 6. 초보 교육생 맞춤형 담백한 프롬프트
+                    # 라이트룸 모바일 버전 기준 보정 팁 반영
                     prompt = """
-                    너는 사진 선생님이고, 나는 사진 초보 교육생이야.
-                    내가 찍은 사진을 기술적인 관점에서 냉정하고 객관적으로 피드백해줘.
-                    칭찬이나 격려는 생략하고, 무엇이 문제인지 어떻게 고쳐야 할지만 명확히 짚어줘.
+                    나는 사진 초보 교육생이야. 너는 기술적인 부분을 냉정하게 피드백하는 선생님이고.
+                    감정적인 말은 빼고, 사실 기반의 기술적 피드백과 보정 방향만 알려줘.
+                    나는 '라이트룸 모바일(Lightroom Mobile)' 앱으로 보정해.
                     
                     형식은 아래 구조를 반드시 지켜줘:
                     
                     **[평가 점수]** : 0~100점
                     
                     **[사진 분석]**
-                    현재 사진의 구도, 빛의 상태, 초점 등을 초보자도 이해하기 쉬운 용어로 사실 위주로 설명해줘.
+                    현재 사진의 구도, 빛, 초점 상태를 사실 위주로 설명해줘.
                     
                     **[장점]**
-                    잘한 점 1~2가지.
+                    잘된 점 1~2가지.
                     
                     **[단점]**
-                    기술적으로 아쉬운 점 1~2가지. (전문 용어보다는 '초점이 어디에 맞지 않았다', '사진이 흔들렸다' 식으로 설명해줘)
+                    기술적으로 아쉬운 점 1~2가지. (초보자 눈높이에서 설명)
+                    
+                    **[라이트룸 모바일 보정 팁]**
+                    라이트룸 모바일 앱의 '편집' 메뉴 하단 슬라이더를 기준으로, 조절하면 좋을 항목 2가지를 알려줘.
+                    (예: 노출, 대비, 밝은 영역, 어두운 영역, 흰색 계열, 검정 계열, 생동감, 채도 등 앱에 표시된 이름 사용)
                     
                     **[총평]**
-                    현재 사진의 상태를 한 문장으로 요약하고, 다음 촬영 때 딱 한 가지만 기억할 점을 담백하게 알려줘.
+                    다음 촬영 때 딱 한 가지만 기억할 점을 담백하게 요약.
                     """
                     
                     response = model.generate_content([prompt, final_img])
@@ -70,4 +68,4 @@ if uploaded_file is not None:
                     st.error(f"분석 오류: {e}")
                     
     except Exception:
-        st.error("파일을 처리할 수 없습니다. 다른 사진으로 시도해 주세요.")
+        st.error("파일을 처리할 수 없습니다.")
