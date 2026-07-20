@@ -5,47 +5,66 @@ import io
 
 st.set_page_config(page_title="📸 AI 사진 평가기", layout="centered")
 
+# API 설정
 if "API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["API_KEY"])
 else:
-    st.error("🚨 설정 오류")
+    st.error("🚨 API_KEY 설정이 없습니다.")
     st.stop()
 
 st.title("📸 AI 사진 평가기")
-uploaded_file = st.file_uploader("사진 선택", type=None)
 
+# 파일 업로더
+uploaded_file = st.file_uploader("사진을 선택하세요", type=None)
+
+# 파일이 바뀌면 자동으로 이전 결과 지우기
 if uploaded_file is not None:
+    # 이미지 처리
     try:
-        # 파일 내용을 읽음
         file_bytes = uploaded_file.read()
-        
-        # PIL로 열기
         img = Image.open(io.BytesIO(file_bytes))
         
-        # [핵심] 웹에서 가장 안전한 형식으로 메모리에서 새로 저장
-        # 이렇게 하면 카메라 고유의 복잡한 메타데이터가 100% 삭제됩니다.
+        # 표준 규격으로 변환하여 오류 원천 차단
         buffer = io.BytesIO()
-        img.convert("RGB").save(buffer, format="JPEG", quality=85)
+        img.convert("RGB").save(buffer, format="JPEG", quality=90)
         buffer.seek(0)
         final_img = Image.open(buffer)
         
         st.image(final_img, use_column_width=True)
         
-        if st.button("AI 평가 시작"):
-            with st.spinner("분석 중..."):
+        # 분석 버튼
+        if st.button("AI 전문 사진 분석 시작"):
+            with st.spinner("전문 사진가의 시선으로 분석 중..."):
                 try:
                     model = genai.GenerativeModel(model_name='gemini-3.5-flash')
+                    
+                    # 전문성을 살린 프롬프트
                     prompt = """
-                    전문 사진가 관점에서 평가해줘.
-                    1. [종합 점수] (0~100점)
-                    2. [핵심 장점] 1~2개
-                    3. [개선 제안] 1~2개
-                    3문장 이내로 간결하게 부탁해.
+                    이 사진을 전문 사진가 관점에서 상세하고 밀도 있게 평가해줘.
+                    형식은 아래 구조를 반드시 지켜줘:
+
+                    **[종합 점수]** : 0~100점 사이의 점수
+                    
+                    **[작품 개요]**
+                    사진의 주제와 분위기, 의도를 심도 있게 분석해줘.
+
+                    **[사진가적 장점]**
+                    구도, 조명, 색감, 피사체 포착 능력 등을 상세히 2가지로 기술해줘.
+
+                    **[기술적 제언]**
+                    노이즈, 화이트 밸런스, 셔터 스피드 등 기술적으로 보완할 점을 상세히 2가지로 기술해줘.
+
+                    **[최종 총평]**
+                    작가의 성장을 위한 따뜻하고 전문적인 격려의 메시지로 마무리해줘.
                     """
+                    
                     response = model.generate_content([prompt, final_img])
+                    
                     st.markdown("---")
                     st.markdown(response.text)
+                    
                 except Exception as e:
-                    st.error(f"분석 오류: {e}")
+                    st.error(f"분석 중 오류 발생: {e}")
+                    
     except Exception:
-        st.error("사진 파일을 처리할 수 없습니다. 다른 사진으로 시도해주세요.")
+        st.error("파일을 처리할 수 없습니다. 다른 사진으로 시도해 주세요.")
