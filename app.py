@@ -13,7 +13,7 @@ st.set_page_config(page_title="AI 사진 평가 앱", layout="centered")
 try:
     api_key = st.secrets["API_KEY"]
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-1.5-flash-latest')
 except Exception as e:
     st.error("API 키 설정에 문제가 있습니다. Secrets를 확인해주세요.")
 
