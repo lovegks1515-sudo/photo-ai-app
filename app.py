@@ -3,7 +3,7 @@ import google.generativeai as genai
 from PIL import Image
 import io
 
-st.set_page_config(page_title="📸 AI 사진 평가기", layout="centered")
+st.set_page_config(page_title="📸 사진 분석", layout="centered")
 
 if "API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["API_KEY"])
@@ -11,7 +11,7 @@ else:
     st.error("🚨 API_KEY 설정이 없습니다.")
     st.stop()
 
-st.title("📸 AI 사진 평가기")
+st.title("📸 사진 분석")
 
 uploaded_file = st.file_uploader("사진을 선택하세요", type=None)
 
@@ -27,28 +27,29 @@ if uploaded_file is not None:
         
         st.image(final_img, use_column_width=True)
         
-        if st.button("AI 전문 사진 분석 시작"):
+        if st.button("분석 시작"):
             with st.spinner("분석 중..."):
                 try:
                     model = genai.GenerativeModel(model_name='gemini-3.5-flash')
                     
-                    # 담백하게 수정된 프롬프트
+                    # 교육생-선생님 관계의 담백한 프롬프트
                     prompt = """
-                    이 사진을 전문 사진가 관점에서 냉정하고 간결하게 분석해줘.
-                    감정적인 표현이나 격려의 말은 일절 배제하고, 사실 기반의 기술적 피드백만 제공해.
+                    나는 사진 교육생이고, 너는 사진 선생님이야. 
+                    내가 찍은 사진을 보고 기술적인 관점에서 냉정하고 객관적으로 피드백해줘.
+                    칭찬이나 격려는 생략하고, 무엇이 문제인지, 어떻게 고쳐야 할지만 명확히 짚어줘.
                     
-                    형식은 아래 구조를 반드시 지켜줘:
+                    형식은 아래 구조를 지켜줘:
                     
-                    **[종합 점수]** : 0~100점
+                    **[평가 점수]** : 0~100점
                     
-                    **[작품 분석]**
-                    주제, 구도, 조명, 색감에 대한 사실적인 평가.
+                    **[분석]**
+                    현재 사진의 구도, 조명, 노출, 초점 상태에 대한 팩트 위주의 기술적 분석.
                     
-                    **[기술적 피드백]**
-                    노이즈, 선명도, 셔터 스피드, 조명 균형 등 보완이 필요한 기술적 요소 2가지.
+                    **[개선 사항]**
+                    다음 촬영 시 반드시 수정해야 할 기술적 보완점 2가지.
                     
                     **[총평]**
-                    작품의 특징과 기술적 개선 방향에 대한 담백한 요약.
+                    교육생의 현 실력에 대한 간결한 평가와 다음 과제.
                     """
                     
                     response = model.generate_content([prompt, final_img])
